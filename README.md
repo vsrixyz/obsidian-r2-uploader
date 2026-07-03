@@ -115,34 +115,6 @@ For development with auto-rebuild:
 npm run dev
 ```
 
-## Releases
-
-1. Bump `version` in `manifest.json` and `package.json`.
-2. Add the new version to `versions.json`.
-3. Tag and push — CI builds and attaches `main.js` + `manifest.json` to the GitHub release:
-   ```bash
-   git tag 1.0.1
-   git push origin 1.0.1
-   ```
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---------|-----|
-| "Please configure the plugin settings first" | Fill in all five fields. |
-| Test connection: **Access denied** | Verify the token has `Object Read & Write` for this bucket, and re-check the Access Key ID / Secret. If the test 403s but real pastes upload fine, R2's `HeadBucket` check can be stricter than object writes — trust the paste. |
-| Test connection: **Bucket not found** | Re-check Account ID and Bucket name (case-sensitive). |
-| Images upload but don't display | Public access not enabled, wrong Public base URL, or (custom domain) DNS not connected to the bucket. |
-| Images save locally instead of uploading | Plugin not enabled, or the pasted/dropped item isn't an image. |
-
-## Known limitations
-
-- Desktop only (not tested on mobile).
-- Only images are handled; other files pass through to Obsidian's default behaviour.
-- Uploads are sequential per paste/drop event.
-- Uses standard Markdown `![alt](url)`, not wiki-links `![[file]]`.
-- Region is always `auto`; the endpoint is derived from the Account ID.
-
 ## License
 
 [MIT](LICENSE)
