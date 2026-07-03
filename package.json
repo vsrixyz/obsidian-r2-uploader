@@ -2,6 +2,12 @@
   "name": "obsidian-r2-image-uploader",
   "version": "1.0.0",
   "description": "Auto-upload pasted/dropped images to Cloudflare R2",
+  "author": "V Sri",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vsrixyz/obsidian-r2-uploader.git"
+  },
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
