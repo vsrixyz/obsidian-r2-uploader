@@ -1,124 +1,56 @@
 # Obsidian R2 Uploader
 
-A minimal Obsidian plugin that automatically uploads **pasted** or **drag-and-dropped** images to [Cloudflare R2](https://developers.cloudflare.com/r2/) and inserts a standard Markdown image link into your note.
-
-- Cloudflare R2 only (S3-compatible API)
-- Images only — other file types fall through to Obsidian's default behaviour
-- Desktop only
+Ever paste a screenshot into a note and end up with a messy pile of image files in your vault? This plugin fixes that. When you paste or drag an image into a note, it uploads the image to your own [Cloudflare R2](https://developers.cloudflare.com/r2/) storage and inserts a normal image link — your vault stays light and your images live in the cloud.
 
 ## What it does
 
-- **Paste**: copy an image (screenshot, browser image, etc.) and paste into the editor → uploaded to R2 → `![filename](url)` inserted.
-- **Drag & drop**: drag an image from Finder/Explorer into the editor → uploaded to R2 → `![filename](url)` inserted.
+Paste or drag an image into the editor. A brief `Uploading…` placeholder appears, then becomes a Markdown image link pointing at your R2 bucket. Images only — anything else pastes as usual. Desktop only.
 
-While the upload is in flight, a placeholder `![Uploading… (id)]()` is shown at the cursor and replaced with the final link on success. On failure the placeholder is removed and an error notice is shown.
+## What you need (prerequisites)
 
-## Cloudflare R2 setup
+- A [Cloudflare account](https://dash.cloudflare.com) (free tier is fine)
+- An R2 bucket to store images in
+- An R2 API token with **Object Read & Write** on that bucket
+- A public URL for the bucket — either a free `r2.dev` subdomain or your own domain (optional, but nicer links)
+- Obsidian on desktop
 
-You need five values. Here's how to get each one.
+## How to install
 
-### 1. Create a bucket
+**Step 1 — Gather five values from Cloudflare.** In the dashboard, open **R2**:
 
-R2 → **Create bucket** → give it a name (e.g. `mangosteen`). This is your **Bucket name**.
+1. **Bucket name** — **Create bucket**, name it (e.g. `my-notes-images`).
+2. **Account ID** — on the R2 Overview page, the S3 API address reads `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`; the `<ACCOUNT_ID>` part is it.
+3. **Access Key ID** and **Secret Access Key** — **Manage R2 API Tokens → Create API Token**, set **Object Read & Write**, restrict it to your bucket, **Create**. The secret shows once, so copy it now.
+4. **Public base URL** — bucket **Settings → Public access**. Enable the `r2.dev` subdomain (`https://pub-xxxx.r2.dev`) or connect a custom domain (`https://images.example.com`). Keep the `https://`.
 
-### 2. Account ID
+**Step 2 — Install the plugin files.**
 
-R2 → **Overview** → the **S3 API** endpoint on the right reads
-`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`. The hex string is your **Account ID**.
+1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/vsrixyz/obsidian-r2-uploader/releases).
+2. In your vault, create `.obsidian/plugins/r2-image-uploader/` and drop both files in. (The `.obsidian` folder is hidden — on Mac, `Cmd+Shift+.` shows hidden files in Finder.)
+3. In Obsidian, open **Settings → Community plugins**, reload or restart, then enable **R2 Image Uploader**.
 
-### 3. API token → Access Key ID + Secret Access Key
+**Step 3 — Configure and test.** Open the plugin's settings, paste in your five values, and click **Test connection**. Once it passes, paste an image into a note.
 
-R2 → **Manage R2 API Tokens** → **Create API Token**:
+## Settings
 
-- **Permissions:** `Object Read & Write` (not Admin — least privilege).
-- **Bucket scope:** restrict to the single bucket you created (not "all buckets").
-- Click **Create**.
+| Setting | What it is |
+|---------|-----------|
+| Account ID | Your Cloudflare account ID. |
+| Bucket name | The bucket images upload to. |
+| Access Key ID | The public half of your R2 token. |
+| Secret Access Key | The private half — hidden in the input. |
+| Public base URL | The address your images load from. |
+| Path template | Folder and filename pattern in the bucket. |
 
-The result screen shows the **Access Key ID** and the **Secret Access Key**.
-⚠️ The secret is shown **only once** — copy it immediately.
-
-> Use the **Access Key ID / Secret Access Key** pair (the S3-style credentials), not the "Token value" shown at the top of that page.
-
-### 4. Public base URL
-
-Your bucket → **Settings** → **Public access**. Either:
-
-- **r2.dev subdomain** — quick, gives `https://pub-xxxxxxxx.r2.dev`. Rate-limited; fine for testing.
-- **Custom domain** — connect a domain that's on Cloudflare (e.g. `https://img.example.com`). Cleaner URLs, no rate limit. Recommended.
-
-Copy whichever URL you enable — this is your **Public base URL**. Include the `https://` scheme.
-
-> Tip: visiting the bare public URL in a browser and getting R2's branded
-> *"Error 404 — Object not found / Is this your bucket?"* page is the **expected**
-> success signal — it confirms the domain is wired to the bucket. There's just
-> nothing at the root path yet.
-
-## Installation
-
-This plugin is installed manually (not in the community store).
-
-1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/vsrixyz/obsidian-r2-uploader/releases), **or** build them yourself (see [Build](#build)).
-2. Create the folder `<your-vault>/.obsidian/plugins/r2-image-uploader/`.
-3. Copy `main.js` and `manifest.json` into it.
-4. In Obsidian: **Settings → Community plugins** → reload/restart → enable **R2 Image Uploader**.
-5. Open the plugin's settings tab and fill in the five values above (plus an optional path template).
-6. Click **Test connection** — expect *"R2 connection successful!"* — then paste an image to confirm.
-
-## Settings reference
-
-| Field | Example |
-|-------|---------|
-| Account ID | `abc123def456...` (32 hex chars) |
-| Bucket name | `my-images` |
-| Access Key ID | `AKIAEXAMPLE...` |
-| Secret Access Key | `wJalrEXAMPLEKEY...` (masked in the UI) |
-| Public base URL | `https://img.example.com` |
-| Path template | `obsidian/{year}/{timestamp}-{fileName}.{ext}` |
-
-### Path template variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `{year}` | 4-digit year | `2026` |
-| `{month}` | 2-digit month | `07` |
-| `{day}` | 2-digit day | `03` |
-| `{timestamp}` | Unix timestamp (ms) | `1751520000000` |
-| `{fileName}` | Sanitised original filename | `screenshot` |
-| `{ext}` | File extension | `png` |
-
-Only these tokens are substituted; anything else is left in the path literally.
+The path template controls where files land. Default: `obsidian/{year}/{timestamp}-{fileName}.{ext}` → `obsidian/2026/1751520000000-screenshot.png`. Available pieces: `{year}` `{month}` `{day}` (date), `{timestamp}` (unique number), `{fileName}` (cleaned original name), `{ext}` (file type).
 
 ## Security
 
-- The only external requests go to the Cloudflare R2 S3 endpoint
-  (`https://<account-id>.r2.cloudflarestorage.com`) over HTTPS. No other service is contacted.
-- Credentials are stored in `<vault>/.obsidian/plugins/r2-image-uploader/data.json`
-  in **plaintext** (standard for Obsidian plugins). The Secret Access Key is masked in the UI
-  and never written to logs or error messages.
-- **If your vault is synced** (git / iCloud / Obsidian Sync / Dropbox), add
-  `.obsidian/plugins/r2-image-uploader/data.json` to that tool's ignore list so the
-  secret doesn't travel.
-- Scope the API token to a single bucket with `Object Read & Write` only.
+- The plugin only contacts your own Cloudflare R2 storage — no other service.
+- Your keys are stored on your machine in the plugin's `data.json` in plain text (standard for Obsidian plugins). The secret is masked in the settings UI.
+- If your vault syncs (iCloud, Obsidian Sync, Dropbox, git), that file travels with it. To keep the secret local, exclude `.obsidian/plugins/r2-image-uploader/data.json` from sync.
+- Scoping the token to one bucket with Read & Write limits the damage if the key ever leaks.
 
-## Build
+## License & credits
 
-Requires Node 18+ and npm.
-
-```bash
-npm install
-npm run build   # produces main.js
-```
-
-For development with auto-rebuild:
-
-```bash
-npm run dev
-```
-
-## License
-
-[MIT](LICENSE)
-
-## Credits
-
-Originally based on [aest3ra/obsidian-r2-auto-upload](https://github.com/aest3ra/obsidian-r2-auto-upload).
+[MIT](LICENSE). Based on [aest3ra/obsidian-r2-auto-upload](https://github.com/aest3ra/obsidian-r2-auto-upload).
