@@ -68,10 +68,10 @@ This plugin is installed manually (not in the community store).
 
 | Field | Example |
 |-------|---------|
-| Account ID | `2a5c6609...` |
-| Bucket name | `mangosteen` |
-| Access Key ID | `43bd4d4b...` |
-| Secret Access Key | `a0491fe0...` (masked in the UI) |
+| Account ID | `abc123def456...` (32 hex chars) |
+| Bucket name | `my-images` |
+| Access Key ID | `AKIAEXAMPLE...` |
+| Secret Access Key | `wJalrEXAMPLEKEY...` (masked in the UI) |
 | Public base URL | `https://img.example.com` |
 | Path template | `obsidian/{year}/{timestamp}-{fileName}.{ext}` |
 
